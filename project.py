@@ -99,5 +99,84 @@ window = sg.Window('ID-Window', layout)
 event, values = window.Read()
 window.Close()
 
+##########NCC computation #######################
+def splitting(img):
+    l,w = img.shape[0:2]
+    l1 = int(l/2)
+    w1 = int(w/2)
+    if w%2 == 0:
+        w=w-1
+    if l%2 == 0:
+        l=l-1
+    if w1%2 == 0:
+        w1=w1+1
+    if l1%2 == 0:
+        l1=l1+1
+    
+    print(w,l,l1,w1)
+    s = []
+    print("shapessss")
+    s.append(img[0:l1,0:w1])
+    s.append(img[0:l1,-w1:])
+    s.append(img[-l1:,0:w1])
+    s.append(img[-l1:,-w1:])
+    s.append(img[0:l1,0:w])
+    s.append(img[-l1:,0:w])
+    s.append(img[0:l,0:w1])
+    s.append(img[0:l,-w1:])
+    
+    return s
 
+
+# s1 existing template of the original letter
+# s2 windowed template at that particular location
+
+#Normalized correlation utility function 
+def correlation(img,x,y,s1):
+    ans=[]
+    s2=extract_template(img,x,y)
+    
+    for i in range(8):
+        Is=s2[i]
+        Itp=s1[i]
+        Is_bar=np.ones(Is.shape)*np.mean(Is)
+        Itp_bar=np.ones(Itp.shape)*np.mean(Itp)
+        Is_diff=Is-Is_bar
+        Itp_diff=Itp-Itp_bar
+        
+        ans.append(np.sum((Is_diff)*(Itp_diff))/np.sqrt(np.sum((Is_diff**2))*np.sum((Itp_diff**2))))
+    
+    ans=np.asarray(ans)
+    ans=np.nan_to_num(ans)
+        
+    return ans
+
+
+
+
+#Thresholding with respect to 
+templates = splitting(crop_img)
+mat = []
+for template in templates:
+    t_w = int(template.shape[0]/2)
+    t_h = int(template.shape[1]/2)
+    im_pad = np.pad(img,((t_w,t_w),(t_h,t_h)),'constant')
+    ret=cv2.matchTemplate(im_pad,template,cv2.TM_CCORR_NORMED)
+    filtered = ndimage.maximum_filter(ret, size=4)
+    mat.append(filtered)
+    
+s = np.array(mat[0])
+for i in range(1,len(mat)):
+    s = s+np.array(mat[i])
+    
+op=np.zeros(ret.shape)
+for i in range(ret.shape[0]):
+    for j in range(ret.shape[1]):
+        if(ret[i][j]>0.75):
+            op[i][j]=255
+
+plt.imshow(op,'gray')
+plt.show()
+
+###############################################################
 
