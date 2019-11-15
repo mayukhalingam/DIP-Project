@@ -99,6 +99,58 @@ window = sg.Window('ID-Window', layout)
 event, values = window.Read()
 window.Close()
 
+#################### Encoding Function for unicode Mapping ##################################
+
+#Encode function to map the given user input with its correponding unicode 
+def encode(ip):
+    if(ip<6):
+        op=str(0)+str(91)+str(ip+4)
+    if(ip>=6 and ip<=11):
+        temp=ip+4
+        if(temp==10):
+            op=str(0)+str(91)+'A'
+        if(temp==11):
+            op=str(0)+str(91)+'B'
+        if(temp==12):
+            op=str(0)+str(91)+'C'
+        if(temp==13):
+            op=str(0)+str(91)+'D'
+        if(temp==14):
+            op=str(0)+str(91)+'E'
+        if(temp==15):
+            op=str(0)+str(91)+'F'
+
+    if(ip>11 and ip<=26):
+        temp=ip-11
+        if(temp<10):
+            op=str(0)+str(92)+str(temp)
+        if(temp==10):
+            op=str(0)+str(92)+'A'
+        if(temp==11):
+            op=str(0)+str(92)+'B'
+        if(temp==12):
+            op=str(0)+str(92)+'C'
+        if(temp==13):
+            op=str(0)+str(92)+'D'
+        if(temp==14):
+            op=str(0)+str(92)+'E'
+        if(temp==15):
+            op=str(0)+str(92)+'F'
+    if(ip==27):
+        op=str(0)+str(930)
+    if(ip==28):
+        op=str(0)+str(932)
+    if(ip>28):
+        op=str(0)+str(93)+str(ip-24)
+    
+    return op
+
+
+ip=values[0]
+ip=int(ip)
+op_code=encode(ip)
+print(op_code)
+
 ##########NCC computation #######################
 def splitting(img):
     l,w = img.shape[0:2]
@@ -179,4 +231,7 @@ plt.imshow(op,'gray')
 plt.show()
 
 ###############################################################
+
+
+
 
