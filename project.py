@@ -230,7 +230,32 @@ for i in range(ret.shape[0]):
 plt.imshow(op,'gray')
 plt.show()
 
-###############################################################
+########################## extracting character patch ###########################
+
+templates = splitting(crop_img)
+mat = []
+for template in templates:
+    t_w = int(template.shape[0]/2)
+    t_h = int(template.shape[1]/2)
+    im_pad = np.pad(img,((t_w,t_w),(t_h,t_h)),'constant')
+    ret=cv2.matchTemplate(im_pad,template,cv2.TM_CCORR_NORMED)
+    filtered = ndimage.maximum_filter(ret, size=4)
+    mat.append(filtered)
+
+s = np.array(mat[0])
+for i in range(1,len(mat)):
+    s = s+np.array(mat[i])
+
+op=np.zeros(ret.shape)
+for i in range(ret.shape[0]):
+    for j in range(ret.shape[1]):
+        if(ret[i][j]>0.75):
+            op[i][j]=255
+
+plt.imshow(op,'gray')
+
+
+######################### HOG feature matching##################################
 
 fd_img, hog_image = hog(img, orientations=9, pixels_per_cell=(8, 8),
                     cells_per_block=(4, 4), visualize=True, multichannel=False)
