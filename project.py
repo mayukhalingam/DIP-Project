@@ -232,6 +232,15 @@ plt.show()
 
 ###############################################################
 
+fd_img, hog_image = hog(img, orientations=9, pixels_per_cell=(8, 8),
+                    cells_per_block=(4, 4), visualize=True, multichannel=False)
+fd_temp, hog_temp = hog(crop_img, orientations=9, pixels_per_cell=(8, 8),
+                    cells_per_block=(4, 4), visualize=True, multichannel=False)
 
+plt.imshow(hog_image,'gray')
+plt.show()
+plt.figure(figsize=(2,2))
+plt.imshow(hog_temp,'gray')
+plt.show()
 
 
