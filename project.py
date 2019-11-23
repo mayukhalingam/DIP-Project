@@ -294,4 +294,14 @@ plt.figure(figsize=(2,2))
 plt.imshow(hog_temp,'gray')
 plt.show()
 
+############################## file generation #############################
+
+a=np.array(a)
+f = open('1.txt', 'a')
+for i in range(a.shape[0]):
+    f.write(str(a[i][0]))
+    f.write(' '+str(a[i][1]))
+    f.write(' '+op_code+'\n')
+
+f.close()
 
