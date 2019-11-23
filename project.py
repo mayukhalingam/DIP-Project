@@ -304,4 +304,45 @@ for i in range(a.shape[0]):
     f.write(' '+op_code+'\n')
 
 f.close()
+############################### editable text generation ###################
+from __future__ import unicode_literals
+import numpy as np
+Info1 = open('dataa.txt','r')
+c = 0
+location_matrix = []
+for x in Info1:
+    y = x.split()
+    c += 1
+    location_matrix.append(y[0])
+    location_matrix.append(y[1])
+    location_matrix.append(y[2])
+
+
+location_matrix = np.reshape(location_matrix,(c,3))
+for i in range(1,c):
+    temp = np.copy(location_matrix[i])
+    j = i - 1
+    while j >= 0 and location_matrix[j][0] > temp[0]:
+        location_matrix[j+1] = location_matrix[j]
+        j = j - 1
+    location_matrix[j+1] = temp
+print(location_matrix)
+
+final = open("final.txt","wb")
+for i in range(c):
+    x = location_matrix[i][2]
+    y =  '\\u'+ str(x)
+    space = " "
+    y = y.strip()
+    space = space.encode("utf-8")
+    y = y.encode("utf-8")
+    y = y.decode('unicode_escape')
+    space = space.decode('unicode_escape')
+    final.write((y.encode('utf8')))
+    final.write(space.encode('utf8'))
+
+    print(y)
+final.close()
+
+
 
