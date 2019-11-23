@@ -230,6 +230,32 @@ for i in range(ret.shape[0]):
 plt.imshow(op,'gray')
 plt.show()
 
+############Clustering for close locations############
+t=10
+a=[]
+i=0
+
+while(i<index.shape[1]):
+    print(i)
+    mx=index[0][i]
+    my=index[1][i]
+    count=1
+    for j in range(i+1,index.shape[1]):
+        marginx=np.abs(index[0][i]-index[0][j])
+        marginy=np.abs(index[1][i]-index[1][j])
+        if(marginx<t and marginy<t):
+            mx=mx+index[0][j]
+            my=my+index[1][j]
+            count=count+1
+            step=j
+    print(count,step)
+    a.append([mx//count,my//count])
+    if(count>1):
+        i=step+1
+    else:
+        i=i+1
+
+
 ########################## extracting character patch ###########################
 
 templates = splitting(crop_img)
