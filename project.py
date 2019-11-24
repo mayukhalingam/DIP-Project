@@ -1,3 +1,7 @@
+#necessary imports and dependencies
+!pip install PySimpleGUI
+
+
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
@@ -8,17 +12,25 @@ from skimage.feature import hog
 from scipy import ndimage
 from skimage.restoration import denoise_nl_means
 
-# reading the input image
-img_input = cv2.imread("test_image.jpg",0)
+
+##### Reading input and Denoising ##############################################
+
+# reading the input image and applying NLM filter
+img_input = cv2.imread("dip_stone.jpg")
+img_input = cv2.cvtColor(img_input, cv2.COLOR_BGR2RGB)
+img_input = cv2.fastNlMeansDenoising(img_input)
+plt.imshow(img_input,'gray')
+
+#Converting the image into gray scale
+img_input = cv2.cvtColor(img_input, cv2.COLOR_RGB2GRAY)
 plt.imshow(img_input ,'gray')
 
-##### DENOISING ##############################################
-# ret,img = cv2.threshold(op,140,255,cv2.THRESH_BINARY)
+#Thresholing it with otsu's method
 ret,img_thre = cv2.threshold(img_input,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)  ## otsu's thresholding 
-#img_thre = 255 - img_thre
 plt.imshow(img_thre,'gray')
 plt.show()
 
+#Application of median blur with 3x3 kernel
 img_denoise = cv2.medianBlur(img_thre,3) ## median filter application
 plt.imshow(img_denoise,'gray')
 plt.show()
@@ -37,6 +49,7 @@ plt.show()
 
 ################# taking inputs ################################
 
+#Utility function to select the character template from the entire image
 def shape_selection(event, x, y, flags, param):
     # grab references to the global variables 
 
@@ -57,7 +70,7 @@ def shape_selection(event, x, y, flags, param):
 	#cv2.rectangle(image, ref_point[0], ref_point[1], (0, 255, 0), 2)
         cv2.imshow("image", image)
 
-
+#Encode function to find the unicode of the character from the character id entered by user
 def encode(ip):
     if(ip<6):
         op=str(0)+str(91)+str(ip+4)
@@ -101,6 +114,8 @@ def encode(ip):
     
     return op
 
+#A split function to extract 8 overlapping parts from the character template
+#Returns a list with all the overlapping parts
 def splitting(img):
     l,w = img.shape[0:2]
     l1 = int(l/2)
@@ -128,6 +143,7 @@ def splitting(img):
     
     return s
 
+#Utility function of correlation
 def correlation(img,x,y,s1):
     ans=[]
     s2=extract_template(img,x,y)
@@ -192,10 +208,11 @@ while(done==False):
 
     cv2.destroyAllWindows()
 
+    #A window taking character id input from the user
     layout = [
         [sg.Text('Please enter the character id')],
-        [sg.Text('id', size=(15, 1)), sg.InputText()],
-        [sg.Text('Type yes if all the characters are marked', size=(5, 1)), sg.InputText()],
+        [sg.Text('id', size=(10, 1)), sg.InputText()],
+        [sg.Text('All marked?', size=(5, 1)), sg.InputText()],
        
         [sg.Submit(), sg.Cancel()]
     ]
@@ -209,6 +226,7 @@ while(done==False):
 
     ip=values[0]
     ip=int(ip)
+    #Generation of output unicode from the character id
     op_code = encode(ip)
     print(op_code)
     
@@ -218,6 +236,7 @@ while(done==False):
     l=int(crop_img.shape[0]/2)
     w=int(crop_img.shape[1]/2)
     
+    #Calculating NCC for all templates
     templates = splitting(crop_img)
     mat = []
     for template in templates:
@@ -234,6 +253,7 @@ while(done==False):
 
     op=np.zeros(ret.shape)
     
+    #Thresholding the output of NCC for character centers
     ret=cv2.matchTemplate(img,crop_img,cv2.TM_CCORR_NORMED)
     for i in range(ret.shape[0]):
         for j in range(ret.shape[1]):
@@ -247,7 +267,7 @@ while(done==False):
     index=np.asarray(index)
     index.sort()
 
-
+    #Extracting exact location centers from clusters detected
     t=10
     a=[]
     i=0
@@ -282,12 +302,12 @@ while(done==False):
     
     match_scores=[]
     patches=[]
+    #Extracting patch images from the location centers
     match_coord = []
     print(a.shape[0])
+
     for i in range(a.shape[0]):
         r,w = crop_img.shape
-        l1=int(r/2)
-        w1=int(w/2)
         x=a[i][0]
         y=a[i][1]
         print(r,w)
@@ -299,34 +319,45 @@ while(done==False):
         hw = y+w
 
         patch = img[lr:hr,lw:hw]
-        
+
+            #Computing HOG of the patch image and the original character template         
+
         fd_patch, hog_patch = hog(patch, orientations=9, pixels_per_cell=(8, 8), 
                     cells_per_block=(4, 4), visualize=True, multichannel=False)
+
+        #Calculating dotproduct as a measure of similarity
+
         norm1=np.linalg.norm(fd_patch,2)
         norm2=np.linalg.norm(fd_crop,2)
         product = np.multiply(fd_patch,fd_crop).sum()/(norm1*norm2)
-    #     print(product) 
+       
+       # Thresholding the ROI based on cosine similarity of HOG features
         if product >= 0.5:
             match_scores.append(product)
             patches.append(patch)
             match_coord.append([lr,hr,lw,hw])
 
     print(match_scores)
+    # array containing the cosine similarities 
     match_scores = np.array(match_scores)
     sort = match_scores.argsort()
     print("sorted",sort)
+
+    #Displaying matched character patches in increasing order of csine similarity
     for i in range(len(sort)):
         print(match_scores[sort[i]])
         plt.imshow(patches[sort[i]],'gray')
         plt.show()
         
-    #patches=np.asarray(patches)
+    #Marking the matched characters in the initial image by making them 0
     for i in range(len(patches)):
         img[match_coord[i][0]:match_coord[i][1], match_coord[i][2]:match_coord[i][3]] = 0
         
 
 
 ############################## file generation #############################
+
+#ALl the obtained locations are appended into a text file for generation of text document
 
 a=np.array(a)
 f = open('1.txt', 'a')
@@ -336,7 +367,11 @@ for i in range(a.shape[0]):
     f.write(' '+op_code+'\n')
 
 f.close()
+
+
 ############################### editable text generation ###################
+
+
 Info1 = open('1.txt','r')
 c = 0
 location_matrix = []
