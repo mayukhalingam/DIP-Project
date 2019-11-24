@@ -337,31 +337,52 @@ for i in range(a.shape[0]):
 
 f.close()
 ############################### editable text generation ###################
-import numpy as np
-Info1 = open('dataa.txt','r')
+Info1 = open('1.txt','r')
 c = 0
 location_matrix = []
+location_matrix2 = []
 for x in Info1:
-    y = x.split()
+    p = x.split()
+    c1 = 0
     c += 1
-    location_matrix.append(y[0])
-    location_matrix.append(y[1])
-    location_matrix.append(y[2])
+    for i in p:
+        c1 += 1
+        if c1 < 3:
+            g = int(i)
+            location_matrix.append(g)
+        else:
+            location_matrix2.append(i)
 
-
-location_matrix = np.reshape(location_matrix,(c,3))
+location_matrix = np.reshape(location_matrix,(c,2)).astype(int)
+location_matrix2 = np.asarray(location_matrix2)
+## sorting
 for i in range(1,c):
     temp = np.copy(location_matrix[i])
     j = i - 1
-    while j >= 0 and location_matrix[j][0] > temp[0]:
-        location_matrix[j+1] = location_matrix[j]
+    while j >= 0 and temp[0] < location_matrix[j][0]:
+        location_matrix[j+1] = np.copy(location_matrix[j])
         j = j - 1
-    location_matrix[j+1] = temp
+    location_matrix[j+1] = np.copy(temp)
+for i  in range(1,c):
+    if(abs(location_matrix[i][0] - location_matrix[i-1][0]) <= 25):
+        location_matrix[i][0] = np.copy(location_matrix[i-1][0])
 print(location_matrix)
+for i in range(1,c):
+    temp = np.copy(location_matrix[i])
+    j = i - 1
+    while j >= 0 and temp[1] < location_matrix[j][1] and location_matrix[j][0] == temp[0]:
+        location_matrix[j+1][1] = np.copy(location_matrix[j][1])
+        j =  j - 1
+    location_matrix[j+1][1] = np.copy(temp[1])
+print(location_matrix)
+rows = np.unique(location_matrix[:,0],False,False,False,None)
+print(rows)
+final = np.vstack((location_matrix[:,0],location_matrix[:,1],location_matrix2))
+final1 = np.transpose(final)
+print(final1)
 
-final = open("final.txt","wb")
 for i in range(c):
-    x = location_matrix[i][2]
+    x = final1[i][2]
     y =  '\\u'+ str(x)
     space = " "
     y = y.strip()
@@ -372,7 +393,13 @@ for i in range(c):
     final.write((y.encode('utf8')))
     final.write(space.encode('utf8'))
 
-    print(y)
+    if int(final1[i][1]) >= img.shape[1]-120:
+        print("y")
+        nex = "\n"
+        nex = nex.encode('utf-8')
+        nex = nex.decode('unicode_escape')
+        final.write(nex.encode('utf8'))
+
 final.close()
 
 
